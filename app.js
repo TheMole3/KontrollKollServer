@@ -21,6 +21,10 @@ app.get('/getTasks', (req, res) => {
     })
 })
 
+app.get('/finishTask', function (req, res) {
+    console.log(res, req)
+})
+
 app.post('/finishTask', function (req, res) {
     console.log(res, req)
 })
