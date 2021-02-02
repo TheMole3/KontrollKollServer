@@ -13,7 +13,9 @@ var db = mongojs(configFile.dbConnect, ['children']); // Import database TheMole
 
 app.get('/getTasks', (req, res) => {
     var id = req.params.id;
-    res.send(db.children.find({id:id}))
+    db.children.find({id:id}, (data) => {
+        res.send(data)
+    })
 })
 
 
