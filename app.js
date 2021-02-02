@@ -10,12 +10,19 @@ var server = app.listen(configFile.port || 3006);
 var mongojs = require('mongojs');
 var db = mongojs(configFile.dbConnect, ['children']); // Import database TheMole and collections bombman and referrals
 
+db.children.find({}, (error, data) => {
+    console.log(data)
+})
 
 app.get('/getTasks', (req, res) => {
-    var id = req.params.id;
+    var id = req.query.id;
     db.children.find({id:parseFloat(id)}, (error, data) => {
         res.send(data)
     })
+})
+
+app.post('/finishTask', function (req, res) {
+    console.log(res, req)
 })
 
 
