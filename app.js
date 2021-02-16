@@ -48,6 +48,7 @@ app.post('/finishTask/:id/:pId', function (req, res) {
     db.children.update({$and:[{id:parseInt(req.params.pId)}, {"tasks.id":parseInt(req.params.id)}]}, {$set: {"tasks.$.pic": req.file.path, "tasks.$.done": true}}, function(err, doc) {
     })
 	db.children.find({$and:[{id:parseInt(req.params.pId)}, {"tasks.id":parseInt(req.params.id)}]}, function(err, docs) {
+		console.log(docs)
 		db.children.update({id:parseInt(req.params.id)}, {$inc: {points: parseInt(docs.points)}})
 	})
     console.log(req.file.path)
