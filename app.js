@@ -47,7 +47,9 @@ app.post('/finishTask/:id/:pId', function (req, res) {
   upload(req, res, function (err) {
     db.children.update({$and:[{id:parseInt(req.params.pId)}, {"tasks.id":parseInt(req.params.id)}]}, {$set: {"tasks.$.pic": req.file.path, "tasks.$.done": true}}, function(err, doc) {
     })
-    db.chidren.update({id:parseInt(req.params.pId)}, {$add: {points: req.params.points}})
+db.children.find({$and:[{id:parseInt(req.params.pId)}, {"tasks.id":parseInt(req.params.id)}]}, function(err, docs) {
+	db.children.update({id:parseInt(req.params.id)}, {$add: {points: docs.points}})
+})
     console.log(req.file.path)
     // Everything went fine.
     res.sendStatus(200)
