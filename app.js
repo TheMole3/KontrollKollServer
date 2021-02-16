@@ -3,58 +3,53 @@ configFile = require("./config.json") // Load configFile
 
 /* Start express, socket, mongo and helmet */
 fs = require('fs');
-var app = require('express')();
+var express = require('express');
+var app = express();
 
 var server = app.listen(configFile.port || 3006);
+const bodyParser = require("body-parser");
 
 var mongojs = require('mongojs');
 var db = mongojs(configFile.dbConnect, ['children']); // Import database TheMole and collections bombman and referrals
 
-db.children.find({}, (error, data) => {
-    console.log(data)
+app.get('/resetDone', (req, res) => {
+  db.children.update({$or: [{"tasks.done": true}, {"tasks.done": false}]}, {$set: {"tasks.$[].done": false}, $unset: {"tasks.$[].pic": ""}}, function(err, doc) {
+    if(err) res.send(500)
+    else res.send(200)
+  })
 })
 
 app.get('/getTasks', (req, res) => {
-    var id = req.query.id;
-    db.children.find({id:parseFloat(id)}, (error, data) => {
-        res.send(data)
-    })
+  var id = req.query.id;
+  db.children.find({id:parseFloat(id)}, (error, data) => {
+    res.send(data)
+    console.log(data)
+  })
 })
 
-const multer = require("multer");
+app.use("/pics", express.static("./pics"))
 
-const handleError = (err, res) => {
-  res
-    .status(500)
-    .contentType("text/plain")
-    .end("Oops! Something went wrong!");
-};
+const multer = require('multer');
 
-const upload = multer({
-  dest: "./tempPics"
-  // you might also want to set some limits: https://github.com/expressjs/multer#limits
+var storage = multer.diskStorage({
+  destination: function (req, file, callback) {
+    console.log(file)
+    callback(null, './pics')
+  },
+  filename: function (req, file, callback) {
+    callback(null, file.fieldname + '-' + Date.now() + ".jpg")
+  }
 });
 
-app.post(
-    "/finishTask",
-    upload.single("file" /* name attribute of <file> element in your form */),
-    (req, res) => {
-        console.log(req.file)
-    }
-)
+var upload = multer({ storage: storage }).single('photo')
 
-app.use(function(req, res, next){ // 404 response for non defined urls
-    res.status(404);
-    // respond with html page
-    if (req.accepts('html')) {
-      res.send(404)
-      return;
-    }
-    // respond with json
-    if (req.accepts('json')) {
-      res.send({ error: 'Not found' });
-      return;
-    }
-    // default to plain-text. send()
-    res.type('txt').send('Not found');
-  });
+app.post('/finishTask/:id/:pId', function (req, res) {
+  upload(req, res, function (err) {
+    db.children.update({$and:[{id:parseInt(req.params.pId)}, {"tasks.id":parseInt(req.params.id)}]}, {$set: {"tasks.$.pic": req.file.path, "tasks.$.done": true}}, function(err, doc) {
+    })
+    db.chidren.update({id:parseInt(req.params.pId)}, {$add: {points: req.params.points}})
+    console.log(req.file.path)
+    // Everything went fine.
+    res.sendStatus(200)
+  })
+})
